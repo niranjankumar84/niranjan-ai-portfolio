@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { personalData } from '../../data/portfolioData';
-import { Mail, Github, Linkedin, ArrowUpRight, Clock, MapPin, Sparkles } from 'lucide-react';
+import { Mail, Github, Linkedin, Instagram, ArrowUpRight, Clock, MapPin, Sparkles } from 'lucide-react';
 
 export default function ContactSection() {
   const socialIcons = {
     github: Github,
     linkedin: Linkedin,
+    instagram: Instagram,
     mail: Mail
   };
 

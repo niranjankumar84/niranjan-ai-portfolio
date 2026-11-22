@@ -39,6 +39,12 @@ export const personalData = {
       icon: "linkedin"
     },
     {
+      name: "Instagram",
+      url: "https://www.instagram.com/this_is_niranjans/",
+      handle: "@this_is_niranjans",
+      icon: "instagram"
+    },
+    {
       name: "Email",
       url: "mailto:kumarniranjan84096@gmail.com",
       handle: "kumarniranjan84096@gmail.com",
@@ -51,9 +57,9 @@ export const personalData = {
       number: "01",
       title: "AI-Powered Gym Trainer",
       status: "In Progress",
-      summary: "An intelligent computer-vision powered training assistant designed to analyze user posture, track workout repetitions in real time, and deliver adaptive form corrections.",
-      description: "Editable placeholder: Built using deep learning pose-estimation pipelines and real-time inference frameworks. Designed to assist fitness enthusiasts with precise workout telemetry without proprietary sensors.",
-      techStack: ["Python", "PyTorch", "Computer Vision", "FastAPI", "React"],
+      summary: "Editable placeholder: Intelligent real-time posture detection, repetition tracking, and workout form guidance.",
+      description: "Editable placeholder: Detailed project description and architecture to be provided by the developer.",
+      techStack: ["Editable Placeholder"],
       links: {
         github: "https://github.com/niranjankumar84",
         demo: "#"
@@ -65,14 +71,28 @@ export const personalData = {
       number: "02",
       title: "LexAI-India",
       status: "In Progress",
-      summary: "A specialized retrieval-augmented legal reasoning platform tailored to the Indian legal system, statutory codes, and case precedents.",
-      description: "Editable placeholder: Employs dense vector embeddings, hybrid semantic search, and large language model orchestration to synthesize legal citations and answer complex statutory inquiries.",
-      techStack: ["Python", "FastAPI", "RAG", "LangChain", "Vector DB", "React"],
+      summary: "Editable placeholder: Specialized legal AI reasoning assistant tailored to the Indian legal context.",
+      description: "Editable placeholder: Detailed project description and architecture to be provided by the developer.",
+      techStack: ["Editable Placeholder"],
       links: {
         github: "https://github.com/niranjankumar84",
         demo: "#"
       },
       previewPlaceholder: "LEGAL_REASONING_PIPELINE"
+    },
+    {
+      id: "ai-resume-ats",
+      number: "03",
+      title: "AI Resume ATS System",
+      status: "In Progress",
+      summary: "Editable placeholder: Intelligent resume parsing and Application Tracking System (ATS) scoring platform.",
+      description: "Editable placeholder: Detailed project description and architecture to be provided by the developer.",
+      techStack: ["Editable Placeholder"],
+      links: {
+        github: "https://github.com/niranjankumar84",
+        demo: "#"
+      },
+      previewPlaceholder: "ATS_SCORING_ENGINE"
     }
   ],
   achievements: [

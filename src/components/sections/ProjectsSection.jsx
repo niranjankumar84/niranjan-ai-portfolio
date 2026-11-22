@@ -19,13 +19,13 @@ export default function ProjectsSection() {
             Featured Projects
           </h2>
           <span className="text-xs font-mono text-zinc-500">
-            [02 SYSTEMS IN ACTIVE DEVELOPMENT]
+            [03 SYSTEMS IN ACTIVE DEVELOPMENT]
           </span>
         </div>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Projects Grid (Responsive 3-column / 2-column / 1-column) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {personalData.projects.map((project, idx) => (
           <motion.div
             key={project.id}
@@ -53,33 +53,33 @@ export default function ProjectsSection() {
 
               {/* Title & Summary */}
               <div className="space-y-3">
-                <h3 className="font-display font-extrabold text-2xl sm:text-3xl text-white group-hover:text-cyan-glow transition-colors duration-200">
+                <h3 className="font-display font-extrabold text-xl sm:text-2xl text-white group-hover:text-cyan-glow transition-colors duration-200">
                   {project.title}
                 </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed font-light">
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-light">
                   {project.summary}
                 </p>
               </div>
 
               {/* Visual Placeholder (Screenshots / 3D Artifact Slot) */}
-              <div className="w-full h-44 rounded-xl border border-white/5 bg-black/60 p-4 flex flex-col justify-between relative overflow-hidden">
+              <div className="w-full h-36 rounded-xl border border-white/5 bg-black/60 p-4 flex flex-col justify-between relative overflow-hidden">
                 <div className="flex justify-between items-center text-[10px] font-mono text-zinc-600">
-                  <span>TELEMETRY_DISPLAY</span>
-                  <span>PREVIEW_PLACEHOLDER</span>
+                  <span>TELEMETRY</span>
+                  <span>PREVIEW_SLOT</span>
                 </div>
                 
                 {/* Center Blueprint Graphic */}
-                <div className="flex flex-col items-center justify-center space-y-2 text-center">
-                  <div className="w-10 h-10 rounded-lg border border-dashed border-cyan-glow/30 bg-cyan-glow/5 flex items-center justify-center">
-                    <Terminal className="w-5 h-5 text-cyan-glow/80" />
+                <div className="flex flex-col items-center justify-center space-y-1.5 text-center">
+                  <div className="w-8 h-8 rounded-lg border border-dashed border-cyan-glow/30 bg-cyan-glow/5 flex items-center justify-center">
+                    <Terminal className="w-4 h-4 text-cyan-glow/80" />
                   </div>
-                  <span className="text-[11px] font-mono text-zinc-400 tracking-wider">
+                  <span className="text-[10px] font-mono text-zinc-400 tracking-wider">
                     {project.previewPlaceholder}
                   </span>
                 </div>
 
                 <div className="text-[9px] font-mono text-zinc-600 text-right">
-                  // SCREENSHOT & INTERACTIVE DEMO PLACEHOLDER
+                  // EDITABLE PLACEHOLDER
                 </div>
               </div>
 
@@ -111,7 +111,7 @@ export default function ProjectsSection() {
                 className="inline-flex items-center space-x-2 text-xs font-mono text-zinc-400 hover:text-cyan-glow transition-colors duration-200"
               >
                 <Github className="w-4 h-4" />
-                <span>REPOSITORY (PLACEHOLDER)</span>
+                <span>REPOSITORY</span>
               </a>
 
               <a
