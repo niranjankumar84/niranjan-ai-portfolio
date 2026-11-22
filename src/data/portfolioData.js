@@ -7,36 +7,101 @@ export const personalData = {
   name: "Niranjan Kumar",
   title: "Software Engineer with AI",
   email: "kumarniranjan84096@gmail.com",
-  location: "India",
+  location: "India (IST UTC+5:30)",
   bio: {
-    tagline: "Bridging Scalable Software Engineering & Artificial Intelligence",
-    summary: "Curious, adaptable, and analytical thinker. Focused on solving complex computational problems and building robust, scalable solutions at the intersection of modern software engineering and generative AI."
+    statement: "I am a curious and adaptable Software Engineer with an interest in Artificial Intelligence. I enjoy understanding complex problems, researching efficient approaches, and turning ideas into practical technology solutions.",
+    corePhilosophy: "Focused on engineering scalable systems, exploring applied generative models, and translating algorithmic theory into dependable software products."
   },
   education: {
     degree: "Bachelor of Computer Applications (BCA)",
     institution: "Birla Institute of Technology, Mesra",
     expectedGraduation: "2027",
-    status: "In Progress"
+    status: "Currently Pursuing",
+    focusAreas: [
+      "Data Structures & Algorithms",
+      "Object-Oriented Programming",
+      "Database Management Systems",
+      "Computer Networks",
+      "Software Engineering Principles"
+    ]
   },
   socialLinks: [
-    { name: "GitHub", url: "https://github.com", icon: "github" },
-    { name: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
-    { name: "Email", url: "mailto:kumarniranjan84096@gmail.com", icon: "mail" }
+    {
+      name: "GitHub",
+      url: "https://github.com/niranjankumar84",
+      handle: "@niranjankumar84",
+      icon: "github"
+    },
+    {
+      name: "LinkedIn",
+      url: "https://www.linkedin.com/in/niranjan-kumar84",
+      handle: "niranjan-kumar84",
+      icon: "linkedin"
+    },
+    {
+      name: "Email",
+      url: "mailto:kumarniranjan84096@gmail.com",
+      handle: "kumarniranjan84096@gmail.com",
+      icon: "mail"
+    }
   ],
   projects: [
     {
       id: "gym-trainer",
+      number: "01",
       title: "AI-Powered Gym Trainer",
       status: "In Progress",
-      description: "Editable placeholder: Intelligent real-time fitness posture detection, repetition tracking, and adaptive coaching engine powered by computer vision and deep learning.",
-      tags: ["Python", "PyTorch", "Computer Vision", "AI"]
+      summary: "An intelligent computer-vision powered training assistant designed to analyze user posture, track workout repetitions in real time, and deliver adaptive form corrections.",
+      description: "Editable placeholder: Built using deep learning pose-estimation pipelines and real-time inference frameworks. Designed to assist fitness enthusiasts with precise workout telemetry without proprietary sensors.",
+      techStack: ["Python", "PyTorch", "Computer Vision", "FastAPI", "React"],
+      links: {
+        github: "https://github.com/niranjankumar84",
+        demo: "#"
+      },
+      previewPlaceholder: "POSTURE_TELEMETRY_ENGINE"
     },
     {
       id: "lexai-india",
+      number: "02",
       title: "LexAI-India",
       status: "In Progress",
-      description: "Editable placeholder: Specialized legal AI reasoning assistant tailored to the Indian legal code, utilizing retrieval-augmented generation (RAG) and dense vector embeddings.",
-      tags: ["FastAPI", "RAG", "LLMs", "LangChain", "Vector DB"]
+      summary: "A specialized retrieval-augmented legal reasoning platform tailored to the Indian legal system, statutory codes, and case precedents.",
+      description: "Editable placeholder: Employs dense vector embeddings, hybrid semantic search, and large language model orchestration to synthesize legal citations and answer complex statutory inquiries.",
+      techStack: ["Python", "FastAPI", "RAG", "LangChain", "Vector DB", "React"],
+      links: {
+        github: "https://github.com/niranjankumar84",
+        demo: "#"
+      },
+      previewPlaceholder: "LEGAL_REASONING_PIPELINE"
+    }
+  ],
+  achievements: [
+    {
+      id: "sih-2026",
+      number: "01",
+      title: "Smart India Hackathon 2026",
+      subtitle: "Personalized Mausam App",
+      type: "Hackathon",
+      status: "Project & Participation",
+      description: "Editable placeholder: Participated with the Personalized Mausam App, addressing hyper-local climate intelligence, predictive weather analytics, and user-centric alerting systems."
+    },
+    {
+      id: "apna-college-aiml",
+      number: "02",
+      title: "AI/ML Course",
+      subtitle: "Apna College",
+      type: "Coursework & Certification",
+      status: "Completed Coursework",
+      description: "Editable placeholder: Comprehensive curriculum covering machine learning algorithms, statistical data analysis, mathematical foundations, and practical deep learning implementations."
+    },
+    {
+      id: "gdg-devfest",
+      number: "03",
+      title: "GDG DevFest",
+      subtitle: "Google Developer Groups",
+      type: "Technical Community & Conference",
+      status: "Active Participation",
+      description: "Editable placeholder: Engaged in Google Developer Group DevFest sessions exploring emerging web technologies, cloud architectures, and machine learning industry developments."
     }
   ]
 };
