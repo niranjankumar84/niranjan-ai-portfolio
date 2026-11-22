@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowDownRight, ArrowRight, Sparkles, Activity, User, Compass, Terminal, Cpu } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, Sparkles, Activity, User, Compass, Terminal, Cpu, Bot } from 'lucide-react';
 import { personalData } from '../../data/portfolioData';
 import HeroCenterpieceCanvas from '../canvas/HeroCenterpieceCanvas';
+import AIEntityPanel from '../../ai/AIEntityPanel';
 
 export default function HeroSection() {
   const [isWireframe, setIsWireframe] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [entityState, setEntityState] = useState('idle');
   const primaryEdu = personalData.educationMilestones[0];
   const heroStatement = personalData.bio.heroStatement || "Exploring intelligent systems, building practical software, and turning complex problems into meaningful technology solutions.";
 
@@ -94,6 +97,22 @@ export default function HeroSection() {
                 <span>EXPLORE SKILLS</span>
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
               </a>
+
+              <button
+                type="button"
+                onClick={() => setAiPanelOpen(true)}
+                className="inline-flex items-center space-x-2.5 px-6 py-3.5 rounded-full border border-cyan-glow/60 bg-black/80 text-white font-mono text-xs font-bold tracking-wider hover:bg-cyan-glow/20 hover:border-cyan-glow hover:shadow-[0_0_25px_rgba(0,229,255,0.4)] transition-all duration-300 group"
+                aria-label="Converse with Niranjan's AI Entity"
+              >
+                <Sparkles className="w-4 h-4 text-cyan-glow group-hover:rotate-12 transition-transform" />
+                <span>CONVERSE WITH AI</span>
+                <span className={`w-2 h-2 rounded-full ${
+                  entityState === 'listening' ? 'bg-emerald-400 animate-ping' :
+                  entityState === 'thinking' ? 'bg-amber-400 animate-pulse' :
+                  entityState === 'speaking' ? 'bg-cyan-glow animate-bounce' :
+                  'bg-cyan-glow animate-pulse'
+                }`} />
+              </button>
             </div>
 
             {/* Secondary Direct Section Links */}
@@ -144,11 +163,21 @@ export default function HeroSection() {
             <HeroCenterpieceCanvas 
               isWireframe={isWireframe} 
               onToggleWireframe={() => setIsWireframe(!isWireframe)} 
+              entityState={entityState}
+              onOpenAIPanel={() => setAiPanelOpen(true)}
             />
           </div>
         </motion.div>
 
       </div>
+
+      {/* Conversational Mechanical AI Entity Panel */}
+      <AIEntityPanel 
+        isOpen={aiPanelOpen} 
+        onClose={() => setAiPanelOpen(false)} 
+        entityState={entityState}
+        onEntityStateChange={setEntityState}
+      />
 
     </section>
   );

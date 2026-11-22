@@ -1,85 +1,115 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { personalData } from '../../data/portfolioData';
-import { GraduationCap, Calendar, MapPin, BookOpen, Sparkles } from 'lucide-react';
+import { GraduationCap, Calendar, Award, Sparkles } from 'lucide-react';
 
 export default function EducationSection() {
-  const { education } = personalData;
+  const milestones = personalData.educationMilestones;
 
   return (
-    <section id="education" className="py-20 border-t border-white/5">
+    <section id="education" className="py-24 border-t border-white/5 relative">
       
-      {/* Header */}
-      <div className="space-y-2 pb-12">
+      {/* Background Ambient Radial Sheen */}
+      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-cyan-glow/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Section Header */}
+      <div className="space-y-2 pb-16">
         <div className="flex items-center space-x-2 text-xs font-mono text-cyan-glow">
           <span>// 04</span>
-          <span className="w-8 h-[1px] bg-cyan-glow/40"></span>
-          <span>WHERE IT STARTED</span>
+          <span className="w-8 h-[1px] bg-cyan-glow/40" />
+          <span>ACADEMIC FOUNDATION & VERIFIED TIMELINE</span>
         </div>
-        <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight uppercase">
-          Academic Foundation
-        </h2>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <h2 className="font-display font-extrabold text-4xl sm:text-6xl text-white tracking-tight uppercase">
+            Education
+          </h2>
+          <span className="text-xs font-mono text-zinc-500">
+            [VERIFIED RECORDS • CHRONOLOGICAL ACADEMIC PROGRESSION]
+          </span>
+        </div>
       </div>
 
-      {/* Main Education Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl rounded-2xl border border-white/10 bg-surface-card/60 backdrop-blur-xl p-8 relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-glow/5 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Elegant Editorial Academic Timeline (No generic cards) */}
+      <div className="relative max-w-4xl mx-auto">
+        
+        {/* Glowing Vertical Spine Line */}
+        <div className="absolute top-4 bottom-4 left-4 sm:left-8 w-[2px] bg-gradient-to-b from-cyan-glow via-cyan-glow/40 to-transparent pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-white/5">
-          <div className="flex items-start space-x-4">
-            <div className="p-3 rounded-xl bg-cyan-glow/10 border border-cyan-glow/30 text-cyan-glow">
-              <GraduationCap className="w-7 h-7" />
-            </div>
-            <div className="space-y-1">
-              <span className="text-[11px] font-mono tracking-widest text-cyan-glow">
-                // UNDERGRADUATE DEGREE
-              </span>
-              <h3 className="font-display font-extrabold text-2xl sm:text-3xl text-white">
-                {education.degree}
-              </h3>
-              <p className="text-base text-zinc-300 font-medium">
-                {education.institution}
-              </p>
-            </div>
-          </div>
+        <div className="space-y-12 sm:space-y-16">
+          {milestones.map((item, idx) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.15 }}
+              className="relative pl-12 sm:pl-20 group"
+            >
+              {/* Timeline Glowing Node Marker */}
+              <div className="absolute left-2.5 sm:left-6.5 top-2 -translate-x-1/2 w-4 h-4 rounded-full bg-black border-2 border-cyan-glow flex items-center justify-center shadow-[0_0_12px_rgba(0,229,255,0.7)] group-hover:scale-125 transition-transform duration-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-glow" />
+              </div>
 
-          <div className="flex flex-col items-start md:items-end space-y-2 font-mono text-xs">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-zinc-300">
-              <Calendar className="w-3.5 h-3.5 text-cyan-glow" />
-              <span>EXPECTED GRADUATION: {education.expectedGraduation}</span>
-            </div>
-            <span className="text-[11px] text-zinc-500">
-              STATUS: {education.status.toUpperCase()}
-            </span>
-          </div>
+              {/* Editorial Item Content */}
+              <div className="border-b border-white/10 pb-8 space-y-4">
+                
+                {/* Meta Tag & Period Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center space-x-2 text-cyan-glow">
+                    <span>// {item.number}</span>
+                    <span>•</span>
+                    <span className="tracking-widest uppercase text-[11px] text-zinc-400">{item.tag}</span>
+                  </div>
+
+                  <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-zinc-300">
+                    <Calendar className="w-3.5 h-3.5 text-cyan-glow" />
+                    <span>{item.periodLabel}: {item.periodValue}</span>
+                  </div>
+                </div>
+
+                {/* Qualification Title */}
+                <div className="space-y-1">
+                  <h3 className="font-display font-extrabold text-2xl sm:text-4xl text-white uppercase tracking-tight group-hover:text-cyan-glow transition-colors duration-200">
+                    {item.qualification}
+                  </h3>
+
+                  {item.degree && item.institution && (
+                    <div className="flex flex-wrap items-center gap-x-3 text-base sm:text-lg text-zinc-300 font-light">
+                      <span className="text-cyan-glow font-mono font-medium">DEGREE: {item.degree}</span>
+                      <span>•</span>
+                      <span>{item.institution}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Prominently Highlighted Academic Percentage */}
+                {item.scoreValue && (
+                  <div className="pt-2 flex items-baseline space-x-3">
+                    <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
+                      {item.scoreLabel}:
+                    </span>
+                    <span className="font-display font-black text-3xl sm:text-4xl text-cyan-glow tracking-tight text-glow-cyan">
+                      {item.scoreValue}
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-500">
+                      [ACADEMIC MERIT]
+                    </span>
+                  </div>
+                )}
+
+                {/* Status Indicator */}
+                <div className="pt-1 flex items-center space-x-2 text-[10px] font-mono text-zinc-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-glow" />
+                  <span>STATUS: {item.status}</span>
+                </div>
+
+              </div>
+
+            </motion.div>
+          ))}
         </div>
 
-        {/* Core Curriculum Focus Areas */}
-        <div className="pt-6 space-y-4">
-          <div className="flex items-center space-x-2 text-xs font-mono text-zinc-400">
-            <BookOpen className="w-3.5 h-3.5 text-cyan-glow" />
-            <span>CORE CURRICULUM & THEORETICAL FOUNDATIONS:</span>
-          </div>
-
-          <div className="flex flex-wrap gap-2.5">
-            {education.focusAreas.map((area, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1.5 rounded-lg border border-white/5 bg-black/40 text-xs font-mono text-zinc-300 hover:border-cyan-glow/30 transition-colors duration-200"
-              >
-                {area}
-              </span>
-            ))}
-          </div>
-        </div>
-
-      </motion.div>
+      </div>
 
     </section>
   );

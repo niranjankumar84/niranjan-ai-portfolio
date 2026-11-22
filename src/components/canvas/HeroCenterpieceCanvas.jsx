@@ -13,14 +13,24 @@ import * as THREE from 'three';
  * 5. Floating Magnetic Pylons (4 satellite telemetry pods orbiting on quadrant axes)
  * 6. Atmospheric Particle Telemetry & Cinematic Lighting Reveal
  */
-export default function HeroCenterpieceCanvas({ isWireframe, onToggleWireframe }) {
+export default function HeroCenterpieceCanvas({ 
+  isWireframe, 
+  onToggleWireframe, 
+  entityState = 'idle',
+  onOpenAIPanel 
+}) {
   const mountRef = useRef(null);
   const [webglSupported, setWebglSupported] = useState(true);
   const isWireframeRef = useRef(isWireframe);
+  const entityStateRef = useRef(entityState);
 
   useEffect(() => {
     isWireframeRef.current = isWireframe;
   }, [isWireframe]);
+
+  useEffect(() => {
+    entityStateRef.current = entityState;
+  }, [entityState]);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -498,6 +508,36 @@ export default function HeroCenterpieceCanvas({ isWireframe, onToggleWireframe }
         }
       });
 
+      // Modulate Core & Lights based on entityState (Voice & AI Intelligence)
+      const st = entityStateRef.current;
+      if (st === 'listening') {
+        const pulse = 1 + Math.sin(time * 8.0) * 0.12;
+        coreGroup.scale.set(pulse, pulse, pulse);
+        cyanLight.color.setHex(0x10b981);
+        cyanLight.intensity = targetLightLevels.cyan * 1.5;
+        innerCoreMat.opacity = 0.95;
+      } else if (st === 'thinking') {
+        const flicker = 0.7 + Math.random() * 0.3;
+        coreGroup.scale.set(flicker, flicker, flicker);
+        cyanLight.color.setHex(0x38bdf8);
+        cyanLight.intensity = targetLightLevels.cyan * (0.8 + flicker * 0.6);
+        innerCoreMat.opacity = flicker;
+      } else if (st === 'speaking') {
+        const speechMod = Math.abs(Math.sin(time * 12.0) * Math.cos(time * 6.0));
+        const pulse = 1 + speechMod * 0.18;
+        coreGroup.scale.set(pulse, pulse, pulse);
+        cyanLight.color.setHex(0x00e5ff);
+        cyanLight.intensity = targetLightLevels.cyan * (1.2 + speechMod * 0.8);
+        innerCoreMat.opacity = 0.75 + speechMod * 0.25;
+      } else if (st === 'error') {
+        cyanLight.color.setHex(0xf59e0b);
+        cyanLight.intensity = targetLightLevels.cyan * 1.2;
+      } else {
+        coreGroup.scale.set(1, 1, 1);
+        cyanLight.color.setHex(0x00e5ff);
+        innerCoreMat.opacity = 0.85 + Math.sin(time * 2.5) * 0.1;
+      }
+
       renderer.render(scene, camera);
     };
 
@@ -560,10 +600,19 @@ export default function HeroCenterpieceCanvas({ isWireframe, onToggleWireframe }
 
       {/* Floating HUD Telemetry & Render Mode Switch */}
       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-auto px-4 py-2 rounded-full border border-white/10 bg-black/75 backdrop-blur-md text-[10px] font-mono text-zinc-400 shadow-[0_4px_25px_rgba(0,0,0,0.8)]">
-        <div className="flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-cyan-glow animate-pulse" />
-          <span className="text-zinc-200 tracking-wider">MECHANICAL AI ENTITY</span>
-        </div>
+        <button
+          onClick={onOpenAIPanel}
+          className="flex items-center space-x-2 text-zinc-200 hover:text-cyan-glow transition-colors group cursor-pointer"
+          title="Open AI Conversational Intelligence Panel"
+        >
+          <span className={`w-2 h-2 rounded-full ${
+            entityState === 'listening' ? 'bg-emerald-400 animate-ping' :
+            entityState === 'thinking' ? 'bg-amber-400 animate-pulse' :
+            entityState === 'speaking' ? 'bg-cyan-glow animate-bounce' :
+            'bg-cyan-glow animate-pulse'
+          }`} />
+          <span className="tracking-wider group-hover:underline">TALK TO AI // {entityState.toUpperCase()}</span>
+        </button>
 
         {/* Shaded / Wireframe Interactive Switch */}
         <button
