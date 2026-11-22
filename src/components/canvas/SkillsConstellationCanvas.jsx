@@ -59,7 +59,7 @@ export default function SkillsConstellationCanvas({ onSelectNode, activeNode }) 
 
       // Create Category Hub Mesh
       const hubMat = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(cat.color || 0x00e5ff),
+        color: new THREE.Color(cat.accentColor || cat.color || 0x00e5ff),
         wireframe: true
       });
       const hubMesh = new THREE.Mesh(categoryHubGeo, hubMat);
