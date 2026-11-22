@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { personalData } from '../../data/portfolioData';
 import ProjectPolyhedronCanvas from '../canvas/ProjectPolyhedronCanvas';
-import ProjectDossierModal from '../projects/ProjectDossierModal';
+import ProjectWorldModal from '../projects/ProjectWorldModal';
 import { 
   Terminal, 
   ArrowRight, 
@@ -286,10 +286,10 @@ export default function ProjectsSection() {
                     color: '#000000',
                     boxShadow: `0 0 25px ${activeProject.accentColor}50`
                   }}
-                  aria-label={`Inspect detailed research dossier for ${activeProject.title}`}
+                  aria-label={`Enter Project World and inspect research dossier for ${activeProject.title}`}
                 >
                   <Sparkles className="w-4 h-4 transition-transform group-hover:rotate-12" />
-                  <span>INSPECT RESEARCH DOSSIER</span>
+                  <span>ENTER PROJECT WORLD</span>
                   <Maximize2 className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
                 </button>
 
@@ -348,7 +348,7 @@ export default function ProjectsSection() {
                 onClick={() => setIsDossierOpen(true)}
                 className="text-cyan-glow hover:underline flex items-center space-x-1 cursor-pointer"
               >
-                <span>OPEN DOSSIER</span>
+                <span>ENTER WORLD</span>
                 <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -357,9 +357,9 @@ export default function ProjectsSection() {
 
       </div>
 
-      {/* Detailed Research Dossier Modal */}
-      <ProjectDossierModal
-        project={activeProject}
+      {/* Immersive Project World Case Study Modal */}
+      <ProjectWorldModal
+        initialProjectId={activeProject.id}
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
       />
