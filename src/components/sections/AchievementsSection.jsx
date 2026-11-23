@@ -8,7 +8,7 @@ export default function AchievementsSection() {
   const achievement = personalData.achievements[0];
 
   return (
-    <section id="achievements" className="py-24 border-t border-white/5 relative">
+    <section id="achievements" aria-label="Certifications and Specialized Coursework" className="py-24 border-t border-white/5 relative">
       
       {/* Background Ambient Radial Sheen */}
       <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-cyan-glow/5 rounded-full blur-3xl pointer-events-none" />
@@ -16,7 +16,7 @@ export default function AchievementsSection() {
       {/* Section Header */}
       <div className="space-y-2 pb-14">
         <div className="flex items-center space-x-2 text-xs font-mono text-cyan-glow">
-          <span>// 05</span>
+          <span>LAB // 05</span>
           <span className="w-8 h-[1px] bg-cyan-glow/40" />
           <span>VERIFIED CREDENTIALS & SPECIALIZED COURSEWORK</span>
         </div>

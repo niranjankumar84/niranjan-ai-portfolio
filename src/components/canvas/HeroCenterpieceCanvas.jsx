@@ -522,6 +522,12 @@ export default function HeroCenterpieceCanvas({
         cyanLight.color.setHex(0x38bdf8);
         cyanLight.intensity = targetLightLevels.cyan * (0.8 + flicker * 0.6);
         innerCoreMat.opacity = flicker;
+      } else if (st === 'tool_execution') {
+        const pulse = 1 + Math.sin(time * 10.0) * 0.15;
+        coreGroup.scale.set(pulse, pulse, pulse);
+        cyanLight.color.setHex(0xa855f7);
+        cyanLight.intensity = targetLightLevels.cyan * 1.6;
+        innerCoreMat.opacity = 0.95;
       } else if (st === 'speaking') {
         const speechMod = Math.abs(Math.sin(time * 12.0) * Math.cos(time * 6.0));
         const pulse = 1 + speechMod * 0.18;

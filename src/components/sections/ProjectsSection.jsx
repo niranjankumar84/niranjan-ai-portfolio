@@ -54,6 +54,22 @@ export default function ProjectsSection() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Listen for Agentic AI project world open dispatch
+  useEffect(() => {
+    const handleOpenProjectWorld = (e) => {
+      const pid = e.detail?.projectId;
+      if (pid) {
+        setActiveProjectId(pid);
+        setIsDossierOpen(true);
+        const el = document.getElementById('projects');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('open-project-world', handleOpenProjectWorld);
+    return () => window.removeEventListener('open-project-world', handleOpenProjectWorld);
+  }, []);
+
   return (
     <section 
       id="projects" 

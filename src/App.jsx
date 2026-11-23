@@ -148,6 +148,8 @@ export default function App() {
 
       {/* Main Portfolio Experience with Grand Dimensional Entrance */}
       <motion.main
+        role="main"
+        aria-label="Portfolio Main Content"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ 
           opacity: showIntro ? 0.3 : 1, 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, Volume2, VolumeX, SkipForward, Compass, Mic, MicOff } from 'lucide-react';
 import { personalData } from '../../data/portfolioData';
+import JourneyTimeline from './JourneyTimeline';
 
 /**
  * CinematicIntro — Human-Centered Opening Experience with Voice Narration
@@ -35,14 +36,22 @@ const SCENE_CAPTIONS = [
   "Welcome to my digital world. Let's explore.",
 ];
 
-// Time-budgets used when audio is OFF or fails (ms)
-const SCENE_DURATIONS_SILENT = [4000, 4000, 7000, 0];
+// Time-budgets used when audio is OFF or fails (ms) — Scene 2 (3rd scene) narration is ~14.3s
+const SCENE_DURATIONS_SILENT = [4500, 5000, 16000, 0];
 
 export default function CinematicIntro({ onComplete }) {
   const [currentScene, setCurrentScene] = useState(0);
   const [isTransitioningOut, setIsTransitioningOut] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('niranjan_voice_enabled');
+      return saved !== null ? saved === 'true' : true; // Auto-attempt by default
+    }
+    return true;
+  });
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [spokenProgress, setSpokenProgress] = useState(0);
   const [captionVisible, setCaptionVisible] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -98,11 +107,24 @@ export default function CinematicIntro({ onComplete }) {
   // ── Audio helpers ────────────────────────────────────────────────────────
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.onplay = null;
+      audioRef.current.ontimeupdate = null;
       audioRef.current.pause();
       audioRef.current.src = '';
       audioRef.current = null;
     }
+    if (typeof window !== 'undefined') {
+      if (window.__currentPortfolioAudio) {
+        window.__currentPortfolioAudio.pause();
+        window.__currentPortfolioAudio.src = '';
+        window.__currentPortfolioAudio = null;
+      }
+      window.__introAudio = null;
+    }
     setAudioPlaying(false);
+    setSpokenProgress(0);
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
@@ -120,24 +142,77 @@ export default function CinematicIntro({ onComplete }) {
     stopAudio();
     const src = SCENE_AUDIO[sceneIdx];
     const audio = new Audio(src);
+    audio.preload = 'auto';
     audioRef.current = audio;
 
-    audio.onplay = () => setAudioPlaying(true);
+    // Retain global reference and prevent overlapping audio instances
+    if (typeof window !== 'undefined') {
+      window.__currentPortfolioAudio = audio;
+      window.__introAudio = audio;
+    }
+
+    setSpokenProgress(0);
+
+    audio.ontimeupdate = () => {
+      if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        setSpokenProgress(audio.currentTime / audio.duration);
+      }
+    };
+
+    audio.onplay = () => {
+      setAudioPlaying(true);
+      setAutoplayBlocked(false);
+    };
+
     audio.onended = () => {
       setAudioPlaying(false);
-      if (sceneIdx < 3) advanceScene(); // auto-advance after narration
+      setSpokenProgress(1);
+      // For Scene 2 (3rd scene), guarantee playback has finished its duration
+      if (sceneIdx === 2) {
+        // Scene 3 audio is ~14.33s. Ensure it played completely before advancing to Scene 4
+        if (audio.currentTime >= 13.0 || audio.ended) {
+          advanceScene();
+        } else {
+          // If ended triggered prematurely, wait remaining duration
+          const remaining = Math.max(500, (14.33 - (audio.currentTime || 0)) * 1000);
+          advanceTimerRef.current = setTimeout(advanceScene, remaining);
+        }
+      } else if (sceneIdx < 3) {
+        advanceScene();
+      }
     };
+
     audio.onerror = () => {
       setAudioPlaying(false);
-      // Fallback: use silent timer
+      // Fallback: use silent timer scaled to scene duration
       if (sceneIdx < 3 && SCENE_DURATIONS_SILENT[sceneIdx] > 0) {
         advanceTimerRef.current = setTimeout(advanceScene, SCENE_DURATIONS_SILENT[sceneIdx]);
       }
     };
 
     audio.play().catch(() => {
-      // Autoplay blocked — user will re-toggle
+      // Browser autoplay policy restricted audio
       setAudioPlaying(false);
+      setAutoplayBlocked(true);
+
+      // Graceful unlock on first visitor interaction anywhere
+      const resumeOnFirstGesture = () => {
+        setAutoplayBlocked(false);
+        if (sceneRef.current !== undefined) {
+          playSceneAudio(sceneRef.current);
+        }
+        ['pointerdown', 'click', 'keydown', 'touchstart'].forEach((ev) => {
+          window.removeEventListener(ev, resumeOnFirstGesture, true);
+        });
+      };
+
+      ['pointerdown', 'click', 'keydown', 'touchstart'].forEach((ev) => {
+        window.addEventListener(ev, resumeOnFirstGesture, { once: true, capture: true });
+      });
+
+      if (sceneIdx < 3 && SCENE_DURATIONS_SILENT[sceneIdx] > 0) {
+        advanceTimerRef.current = setTimeout(advanceScene, SCENE_DURATIONS_SILENT[sceneIdx]);
+      }
     });
   }, [stopAudio, advanceScene]);
 
@@ -186,7 +261,16 @@ export default function CinematicIntro({ onComplete }) {
   const handleVoiceToggle = () => {
     const next = !voiceEnabled;
     setVoiceEnabled(next);
-    if (!next) stopAudio();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('niranjan_voice_enabled', String(next));
+    }
+    if (!next) {
+      stopAudio();
+      setAutoplayBlocked(false);
+    } else {
+      setAutoplayBlocked(false);
+      playSceneAudio(currentScene);
+    }
   };
 
   const handleManualSceneClick = (idx) => {
@@ -230,6 +314,21 @@ export default function CinematicIntro({ onComplete }) {
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Autoplay blocked helper pill */}
+          {autoplayBlocked && voiceEnabled && (
+            <button
+              onClick={() => {
+                setAutoplayBlocked(false);
+                playSceneAudio(currentScene);
+              }}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full border border-cyan-glow/60 bg-cyan-glow/20 text-cyan-glow animate-pulse text-xs font-mono shadow-[0_0_15px_rgba(0,229,255,0.4)] cursor-pointer"
+              title="Click anywhere to activate voice narration"
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>CLICK FOR AUDIO</span>
+            </button>
+          )}
+
           {/* Voice narration toggle */}
           <button
             onClick={handleVoiceToggle}
@@ -262,20 +361,43 @@ export default function CinematicIntro({ onComplete }) {
         </div>
       </header>
 
-      {/* ── CAPTION BAND (shown when voice is on and audio is playing) ─── */}
-      <AnimatePresence>
-        {voiceEnabled && audioPlaying && captionVisible && (
+      {/* ── PROGRESSIVELY SYNCHRONIZED CAPTION BAND ──────────────────────── */}
+      <AnimatePresence mode="wait">
+        {voiceEnabled && captionVisible && (
           <motion.div
             key={`caption-${currentScene}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative z-20 mx-auto max-w-2xl px-5 text-center"
+            className="relative z-20 mx-auto max-w-3xl px-5 text-center pointer-events-none"
           >
-            <p className="inline-block px-4 py-2 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-zinc-200 text-sm sm:text-base font-light leading-relaxed italic">
-              "{SCENE_CAPTIONS[currentScene]}"
-            </p>
+            <div className="inline-block px-5 py-2.5 rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
+              <p className="text-sm sm:text-base font-light leading-relaxed italic select-none">
+                "{SCENE_CAPTIONS[currentScene].split(' ').map((word, wIdx, arr) => {
+                  const currentIdx = audioPlaying
+                    ? Math.min(arr.length - 1, Math.floor(spokenProgress * arr.length * 1.04))
+                    : arr.length - 1;
+                  const isSpoken = wIdx <= currentIdx;
+                  const isCurrent = wIdx === currentIdx && audioPlaying;
+
+                  return (
+                    <span
+                      key={wIdx}
+                      className={`transition-colors duration-150 ${
+                        isCurrent
+                          ? 'text-cyan-glow font-normal drop-shadow-[0_0_10px_rgba(0,229,255,0.9)]'
+                          : isSpoken
+                          ? 'text-white'
+                          : 'text-zinc-600'
+                      }`}
+                    >
+                      {word}{' '}
+                    </span>
+                  );
+                })}"
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -362,21 +484,21 @@ export default function CinematicIntro({ onComplete }) {
                   <div className="relative w-40 h-52 sm:w-48 sm:h-60 rounded-2xl overflow-hidden border border-white/15 bg-zinc-950 shadow-2xl">
                     <img src="/profile.jpg" alt="Niranjan Kumar" className="w-full h-full object-cover object-top brightness-[1.02]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-mono text-cyan-glow bg-black/60 px-2.5 py-1 rounded-md backdrop-blur-sm border border-cyan-glow/20">
-                      <span>NK // 2026</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-glow animate-pulse" />
-                    </div>
+
                   </div>
                 </div>
 
                 <div className="md:col-span-8 text-left space-y-5">
                   <div className="space-y-3">
                     <div className="inline-flex items-center space-x-2 text-xs font-mono text-cyan-glow tracking-widest uppercase">
-                      <Compass className="w-3.5 h-3.5" />
-                      <span>// ARCHITECT & EXPLORER</span>
+                      {/* <Compass className="w-3.5 h-3.5" /> */}
+
                     </div>
-                    <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl tracking-tight text-white uppercase leading-[0.95]">
-                      NIRANJAN KUMAR
+                    <h1
+                      className="text-5xl sm:text-6xl lg:text-7xl text-white leading-[1.15] tracking-normal"
+                      style={{ fontFamily: "'Dancing Script', cursive", fontWeight: 700 }}
+                    >
+                      Niranjan Kumar
                     </h1>
                     <div className="flex items-center space-x-3 pt-1">
                       <div className="w-3 h-3 bg-cyan-glow rounded-sm rotate-45 shadow-[0_0_12px_rgba(0,229,255,0.8)]" />
@@ -421,11 +543,8 @@ export default function CinematicIntro({ onComplete }) {
                   <span>THE HUMAN PHILOSOPHY</span>
                 </div>
 
-                <blockquote className="relative pl-6 sm:pl-8 border-l-2 border-cyan-glow">
-                  <p className="font-display font-medium text-2xl sm:text-3xl lg:text-[2rem] text-white leading-snug tracking-tight">
-                    "I am a curious and adaptable Software Engineer with an interest in Artificial Intelligence. I enjoy understanding complex problems, researching efficient approaches, and turning ideas into practical technology solutions."
-                  </p>
-                </blockquote>
+                {/* Interactive Personal Journey Timeline */}
+                <JourneyTimeline />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/10 text-xs font-mono text-zinc-400">
                   <div className="space-y-1">

@@ -1,10 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { personalData } from '../../data/portfolioData';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { Menu, X, Sparkles, Volume2, VolumeX } from 'lucide-react';
 
 export default function Navbar({ onReplayIntro }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('niranjan_voice_enabled');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
+
+  const toggleVoice = () => {
+    const next = !voiceEnabled;
+    setVoiceEnabled(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('niranjan_voice_enabled', String(next));
+      if (!next && window.__currentPortfolioAudio) {
+        window.__currentPortfolioAudio.pause();
+      }
+    }
+  };
 
   useEffect(() => {
     function handleScroll() {
@@ -30,7 +48,7 @@ export default function Navbar({ onReplayIntro }) {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* Left Links (Desktop) */}
-        <nav className="hidden md:flex items-center space-x-6 text-xs font-mono tracking-widest text-zinc-400">
+        <nav aria-label="Main Navigation" className="hidden md:flex items-center space-x-6 text-xs font-mono tracking-widest text-zinc-400">
           <a href="#about" className="hover:text-cyan-glow transition-colors duration-200">
             // ABOUT
           </a>
@@ -57,13 +75,28 @@ export default function Navbar({ onReplayIntro }) {
         </a>
 
         {/* Right Links (Desktop) */}
-        <nav className="hidden md:flex items-center space-x-5 text-xs font-mono tracking-widest text-zinc-400">
+        <nav aria-label="Secondary Navigation" className="hidden md:flex items-center space-x-5 text-xs font-mono tracking-widest text-zinc-400">
           <a href="#education" className="hover:text-cyan-glow transition-colors duration-200">
             // EDUCATION
           </a>
           <a href="#achievements" className="hover:text-cyan-glow transition-colors duration-200">
             // CERTIFICATIONS
           </a>
+
+          {/* Global Voice Narration Toggle */}
+          <button
+            onClick={toggleVoice}
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-mono transition-all ${
+              voiceEnabled
+                ? 'border-cyan-glow/40 bg-cyan-glow/10 text-cyan-glow shadow-[0_0_8px_rgba(0,229,255,0.2)]'
+                : 'border-white/10 bg-white/5 text-zinc-500 hover:text-zinc-300'
+            }`}
+            title="Toggle Global Voice Narration"
+            aria-label="Toggle Global Voice Narration"
+          >
+            {voiceEnabled ? <Volume2 className="w-3 h-3 text-cyan-glow" /> : <VolumeX className="w-3 h-3" />}
+            <span className="hidden lg:inline">{voiceEnabled ? 'VOICE ON' : 'VOICE OFF'}</span>
+          </button>
 
           {/* Replay Introduction Button */}
           {onReplayIntro && (
@@ -111,7 +144,7 @@ export default function Navbar({ onReplayIntro }) {
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-black/95 border-b border-white/10 p-6 space-y-4 backdrop-blur-2xl shadow-2xl">
-          <nav className="flex flex-col space-y-4 text-sm font-mono tracking-wider text-zinc-300">
+          <nav aria-label="Mobile Navigation" className="flex flex-col space-y-4 text-sm font-mono tracking-wider text-zinc-300">
             {onReplayIntro && (
               <button
                 onClick={() => {
