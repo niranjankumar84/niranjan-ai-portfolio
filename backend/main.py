@@ -95,7 +95,11 @@ class TTSRequest(BaseModel):
 
 
 # ── Gemini Tool Declarations ──────────────────────────────────────────────
-GEMINI_TOOL_DECLARATIONS = [
+# Built using google-genai SDK types (google.genai.types.Tool /
+# FunctionDeclaration / Schema).  Constructed lazily inside the agent loop
+# so the import only happens when a Gemini key is actually configured.
+
+GEMINI_TOOL_SPEC = [
     {
         "name": "navigate_portfolio",
         "description": "Navigate visitors to a specific section of Niranjan's portfolio: hero, about, skills, projects, education, achievements, contact.",
@@ -180,6 +184,48 @@ GEMINI_TOOL_DECLARATIONS = [
         }
     }
 ]
+
+
+def _build_genai_tools():
+    """
+    Convert the GEMINI_TOOL_SPEC list into google-genai SDK Tool objects.
+    Called once per agent invocation; import is intentionally deferred so
+    the backend starts cleanly even when google-genai is not installed.
+    """
+    from google.genai import types as gtypes
+
+    _TYPE_MAP = {
+        "OBJECT":  gtypes.Type.OBJECT,
+        "STRING":  gtypes.Type.STRING,
+        "BOOLEAN": gtypes.Type.BOOLEAN,
+        "NUMBER":  gtypes.Type.NUMBER,
+        "INTEGER": gtypes.Type.INTEGER,
+        "ARRAY":   gtypes.Type.ARRAY,
+    }
+
+    def _build_schema(raw: dict) -> "gtypes.Schema":
+        props = {}
+        for pname, pdef in raw.get("properties", {}).items():
+            props[pname] = gtypes.Schema(
+                type=_TYPE_MAP.get(pdef["type"], gtypes.Type.STRING),
+                description=pdef.get("description"),
+                enum=pdef.get("enum"),
+            )
+        return gtypes.Schema(
+            type=_TYPE_MAP.get(raw["type"], gtypes.Type.OBJECT),
+            properties=props or None,
+            required=raw.get("required") or None,
+        )
+
+    declarations = [
+        gtypes.FunctionDeclaration(
+            name=spec["name"],
+            description=spec["description"],
+            parameters=_build_schema(spec["parameters"]),
+        )
+        for spec in GEMINI_TOOL_SPEC
+    ]
+    return [gtypes.Tool(function_declarations=declarations)]
 
 
 # ── Autonomous Deterministic Agentic Router (Fallback) ───────────────────
@@ -587,60 +633,90 @@ def run_autonomous_agent(user_prompt: str) -> tuple[str, Optional[dict], List[Ag
     return reply, action, trace
 
 
-# ── Gemini Agentic Tool Loop (if configured) ──────────────────────────────
+# ── Gemini Agentic Tool Loop (google-genai SDK) ───────────────────────────
 async def run_gemini_agent_loop(messages: List[Message], gemini_key: str) -> tuple[str, Optional[dict], List[AgentTraceStep]]:
     """
-    Executes a multi-turn tool calling loop using Gemini's function calling API.
-    Max 3 iterations to prevent loops.
-    """
-    import google.generativeai as genai
-    genai.configure(api_key=gemini_key)
+    Multi-turn agentic tool-calling loop using the google-genai SDK (v1+).
 
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction=SYSTEM_PROMPT,
-        tools=GEMINI_TOOL_DECLARATIONS
-    )
+    Flow:
+      1. Build a typed google.genai.Client with the caller-supplied key.
+      2. Convert conversation history to types.Content objects.
+      3. Call client.aio.models.generate_content with system instruction,
+         tools, and history — all passed through GenerateContentConfig.
+      4. If the model returns a function_call Part, execute the matching
+         AGENT_TOOL_REGISTRY entry and feed back a function_response Part.
+      5. Repeat up to 3 iterations; return the final text reply + trace.
+    """
+    from google import genai as gai
+    from google.genai import types as gtypes
+
+    client = gai.Client(api_key=gemini_key)
+
+    # Build typed SDK tool declarations (done once per call)
+    sdk_tools = _build_genai_tools()
 
     trace: List[AgentTraceStep] = []
     step_num = 1
     action = None
 
-    history = []
+    # ── Build conversation history ────────────────────────────────────────
+    # The new SDK uses types.Content(role, parts=[Part]).
+    # Roles must be "user" or "model" (not "assistant").
+    history: List["gtypes.Content"] = []
     for m in messages[:-1]:
-        history.append({"role": m.role if m.role != "assistant" else "model", "parts": [m.content]})
+        sdk_role = "model" if m.role == "assistant" else "user"
+        history.append(
+            gtypes.Content(role=sdk_role, parts=[gtypes.Part.from_text(text=m.content)])
+        )
 
-    chat = model.start_chat(history=history)
     user_msg = messages[-1].content
 
     trace.append(AgentTraceStep(
         step=step_num,
         stage="intent",
         status="completed",
-        title="Intent Understanding (Gemini 1.5 Flash)",
+        title="Intent Understanding (Gemini 2.5 Flash)",
         detail=f"Processing visitor request: '{user_msg[:80]}...'"
     ))
     step_num += 1
 
-    # Send initial message to Gemini with timeout
-    response = await asyncio.wait_for(
-        asyncio.to_thread(chat.send_message, user_msg),
-        timeout=10.0
+    # ── GenerateContentConfig — system instruction + tools ────────────────
+    config = gtypes.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        tools=sdk_tools,
+        temperature=0.4,
     )
 
-    # Maximum 3 tool execution turns
+    # Seed the ongoing contents list with history + first user turn
+    contents: List["gtypes.Content"] = history + [
+        gtypes.Content(role="user", parts=[gtypes.Part.from_text(text=user_msg)])
+    ]
+
+    # ── Send initial request (async) ──────────────────────────────────────
+    response = await asyncio.wait_for(
+        client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=config,
+        ),
+        timeout=15.0,
+    )
+
+    # ── Tool-calling loop (max 3 iterations) ─────────────────────────────
     for _ in range(3):
-        tool_call = None
-        for part in response.candidates[0].content.parts:
-            if hasattr(part, "function_call") and part.function_call:
-                tool_call = part.function_call
-                break
+        # Find a function_call Part in the first candidate
+        tool_part = None
+        if response.candidates:
+            for part in (response.candidates[0].content.parts or []):
+                if part.function_call and part.function_call.name:
+                    tool_part = part.function_call
+                    break
 
-        if not tool_call:
-            break
+        if not tool_part:
+            break  # No more tool calls; model is done
 
-        tool_name = tool_call.name
-        tool_args = dict(tool_call.args)
+        tool_name = tool_part.name
+        tool_args = dict(tool_part.args) if tool_part.args else {}
 
         trace.append(AgentTraceStep(
             step=step_num,
@@ -653,46 +729,66 @@ async def run_gemini_agent_loop(messages: List[Message], gemini_key: str) -> tup
         ))
         step_num += 1
 
-        # Execute verified tool
+        # Execute the verified portfolio tool
         if tool_name in AGENT_TOOL_REGISTRY:
             try:
                 tool_result = AGENT_TOOL_REGISTRY[tool_name](**tool_args)
-                status = "completed" if tool_result.get("status") != "error" else "failed"
-
+                exec_status = "completed" if tool_result.get("status") != "error" else "failed"
                 if "action" in tool_result:
-                    action = {"action": tool_result["action"], "target": tool_result.get("target") or tool_result.get("section")}
+                    action = {
+                        "action": tool_result["action"],
+                        "target": tool_result.get("target") or tool_result.get("section"),
+                    }
             except Exception as tool_err:
                 tool_result = {"status": "error", "message": str(tool_err)}
-                status = "failed"
+                exec_status = "failed"
         else:
             tool_result = {"status": "error", "message": f"Tool '{tool_name}' is not in the authorized portfolio registry."}
-            status = "failed"
+            exec_status = "failed"
 
         trace.append(AgentTraceStep(
             step=step_num,
             stage="tool_execution",
-            status=status,
+            status=exec_status,
             title=f"Tool Execution: {tool_name}",
             tool=tool_name,
             result=tool_result,
-            detail=f"Tool '{tool_name}' execution completed with status '{status}'."
+            detail=f"Tool '{tool_name}' execution completed with status '{exec_status}'."
         ))
         step_num += 1
 
-        # Send tool response back to Gemini to complete reasoning
-        response = await asyncio.wait_for(
-            asyncio.to_thread(chat.send_message, {
-                "parts": [{
-                    "function_response": {
-                        "name": tool_name,
-                        "response": tool_result
-                    }
-                }]
-            }),
-            timeout=10.0
+        # Append the model's function_call turn + our function_response turn
+        # so the model sees the full context on the next generate_content call.
+        contents.append(response.candidates[0].content)   # model's function_call
+        contents.append(
+            gtypes.Content(
+                role="user",
+                parts=[gtypes.Part.from_function_response(
+                    name=tool_name,
+                    response=tool_result,
+                )],
+            )
         )
 
-    final_reply = response.text if hasattr(response, "text") and response.text else "Operation completed."
+        # Send tool result back to the model
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=contents,
+                config=config,
+            ),
+            timeout=15.0,
+        )
+
+    # ── Extract final text reply ──────────────────────────────────────────
+    final_reply = "Operation completed."
+    if response.candidates:
+        candidate_text = response.candidates[0].content
+        for part in (candidate_text.parts or []):
+            if part.text:
+                final_reply = part.text
+                break
+
     trace.append(AgentTraceStep(
         step=step_num,
         stage="evaluation",
