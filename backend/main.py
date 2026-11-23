@@ -40,8 +40,10 @@ app = FastAPI(
     description="Agentic AI assistant and voice intelligence for Niranjan Kumar's portfolio",
 )
 
-CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5173")
+raw_cors_origin = os.getenv("CORS_ORIGIN", "")
+CORS_ORIGIN = raw_cors_origin.strip().rstrip("/") if raw_cors_origin else ""
 ALLOWED_ORIGINS = [
+    "https://niranjan-ai-portfolio.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
